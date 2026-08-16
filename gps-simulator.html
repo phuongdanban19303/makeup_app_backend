@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MUA Mobile App - Telemetry GPS (Real Device & Simulator)</title>
+    <!-- SockJS & STOMP Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            padding: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .card {
+            background-color: #1e293b;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+            margin-bottom: 16px;
+        }
+        h2 { color: #38bdf8; margin-top: 0; font-size: 1.4rem; }
+        .status {
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        .connected { background-color: #166534; color: #4ade80; }
+        .disconnected { background-color: #991b1b; color: #fca5a5; }
+        .form-group {
+            margin-bottom: 14px;
+        }
+        label { display: block; margin-bottom: 6px; font-size: 0.9rem; color: #94a3b8; }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #475569;
+            background: #0f172a;
+            color: white;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+        .btn-start { background-color: #0284c7; color: white; }
+        .btn-start:hover { background-color: #0369a1; }
+        .btn-stop { background-color: #dc2626; color: white; }
+        .btn-stop:hover { background-color: #b91c1c; }
+        .log-box {
+            background-color: #090d16;
+            color: #38bdf8;
+            font-family: monospace;
+            padding: 12px;
+            border-radius: 8px;
+            height: 250px;
+            overflow-y: auto;
+            border: 1px solid #334155;
+            font-size: 0.85rem;
+        }
+        .log-entry { margin-bottom: 6px; line-height: 1.4; }
+        .coords { color: #facc15; font-weight: bold; }
+        .mode-tag { color: #c084fc; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>📱 MUA App - Định Vị GPS Telemetry</h2>
+        <p style="font-size: 0.9rem; color: #94a3b8;">Kết nối trực tiếp tới Backend Spring Boot qua WebSocket STOMP.</p>
+        
+        <div>
+            Trạng thái: <span id="statusBadge" class="status disconnected">OFFLINE</span>
+        </div>
+
+        <div class="form-group">
+            <label>Địa chỉ Server IP Backend:</label>
+            <input type="text" id="serverHostInput" value="localhost:8082" placeholder="Ví dụ trên điện thoại: 192.168.1.X:8082">
+        </div>
+
+        <div class="form-group">
+            <label>MUA / Worker ID:</label>
+            <input type="number" id="workerIdInput" value="101">
+        </div>
+
+        <div class="form-group">
+            <label>Chế độ định vị (Location Source):</label>
+            <select id="gpsModeSelect">
+                <option value="REAL_GPS">📡 GPS Thật từ phần cứng Điện thoại (HTML5 Location)</option>
+                <option value="SIMULATOR">🤖 Giả lập di chuyển tự động (Cho PC/Laptop)</option>
+            </select>
+        </div>
+
+        <div>
+            <button id="btnStart" class="btn-start" onclick="startStreaming()">▶️ Bật ONLINE & Phát Stream GPS</button>
+            <button id="btnStop" class="btn-stop" onclick="stopStreaming()" disabled>⏹️ Tắt App (OFFLINE)</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📋 Nhật Ký Phát Stream (Live Logs):</h3>
+        <div id="logBox" class="log-box">
+            <div class="log-entry">👉 Chọn chế độ GPS THẬT nếu mở trên điện thoại, sau đó bấm Bật ONLINE...</div>
+        </div>
+    </div>
+
+    <script>
+        let stompClient = null;
+        let intervalId = null;
+        let watchPositionId = null;
+
+        let currentLat = 10.776889;
+        let currentLng = 106.700806;
+
+        function log(msg) {
+            const logBox = document.getElementById('logBox');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function startStreaming() {
+            const serverHost = document.getElementById('serverHostInput').value.trim() || 'localhost:8082';
+            const workerId = document.getElementById('workerIdInput').value || 101;
+            const mode = document.getElementById('gpsModeSelect').value;
+
+            const wsUrl = `http://${serverHost}/ws-location`;
+            log(`🔄 Đang mở kết nối WebSocket tới http://${serverHost}/ws-location...`);
+
+            const socket = new SockJS(wsUrl);
+            stompClient = Stomp.over(socket);
+            stompClient.debug = null;
+
+            stompClient.connect({}, function (frame) {
+                document.getElementById('statusBadge').className = 'status connected';
+                document.getElementById('statusBadge').innerText = 'ĐÃ ONLINE (STREAMING)';
+                document.getElementById('btnStart').disabled = true;
+                document.getElementById('btnStop').disabled = false;
+
+                log(`✅ Đã kết nối STOMP WebSocket thành công!`);
+
+                if (mode === 'REAL_GPS') {
+                    startRealGpsTracking(workerId);
+                } else {
+                    startSimulationTracking(workerId);
+                }
+
+            }, function (error) {
+                log(`❌ Lỗi kết nối WebSocket: ${error}`);
+                stopStreaming();
+            });
+        }
+
+        // CHẾ ĐỘ 1: LẤY GPS THẬT TỪ ĐIỆN THOẠI BẰNG HTML5 GEOLOCATION API
+        function startRealGpsTracking(workerId) {
+            if (!navigator.geolocation) {
+                log(`⚠️ Trình duyệt/Thiết bị này không hỗ trợ GPS HTML5! Chuyển sang Giả lập.`);
+                startSimulationTracking(workerId);
+                return;
+            }
+
+            log(`📡 <span class="mode-tag">[GPS THẬT]</span> Đang xin quyền truy cập GPS từ chip phần cứng thiết bị...`);
+
+            watchPositionId = navigator.geolocation.watchPosition(
+                function (position) {
+                    const realLat = position.coords.latitude;
+                    const realLng = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+
+                    log(`📍 <span class="mode-tag">[GPS THẬT]</span> Nhận tọa độ thực: Lat <span class="coords">${realLat.toFixed(6)}</span>, Lng <span class="coords">${realLng.toFixed(6)}</span> (Độ chính xác: ~${accuracy.toFixed(1)}m)`);
+
+                    sendGpsPayload(workerId, realLat, realLng);
+                },
+                function (err) {
+                    log(`⚠️ Không lấy được GPS phần cứng (${err.message}). Hãy kiểm tra xem bạn đã Cho Phép (Allow) vị trí chưa.`);
+                },
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 3000,
+                    timeout: 10000
+                }
+            );
+        }
+
+        // CHẾ ĐỘ 2: GIẢ LẬP TỰ ĐỘNG CHO MÁY TÍNH
+        function startSimulationTracking(workerId) {
+            log(`🤖 <span class="mode-tag">[GIẢ LẬP]</span> Bắt đầu tự động phát stream GPS định kỳ mỗi 5s/lần...`);
+            sendGpsPayload(workerId, currentLat, currentLng);
+            intervalId = setInterval(() => {
+                currentLat += (Math.random() - 0.3) * 0.0008;
+                currentLng += (Math.random() - 0.3) * 0.0008;
+                sendGpsPayload(workerId, currentLat, currentLng);
+            }, 5000);
+        }
+
+        function sendGpsPayload(workerId, lat, lng) {
+            if (!stompClient || !stompClient.connected) return;
+
+            const payload = {
+                workerId: parseInt(workerId),
+                latitude: parseFloat(lat),
+                longitude: parseFloat(lng),
+                bookingId: "REALTIME-LIVE-TEST",
+                timestamp: Date.now()
+            };
+
+            stompClient.send("/app/location/stream", {}, JSON.stringify(payload));
+            log(`🚀 Gửi Stream -> Redis GEOADD & DB PostgreSQL: Worker ${workerId} [${lat.toFixed(6)}, ${lng.toFixed(6)}]`);
+        }
+
+        function stopStreaming() {
+            if (intervalId) clearInterval(intervalId);
+            if (watchPositionId) navigator.geolocation.clearWatch(watchPositionId);
+            if (stompClient) stompClient.disconnect();
+
+            document.getElementById('statusBadge').className = 'status disconnected';
+            document.getElementById('statusBadge').innerText = 'OFFLINE';
+            document.getElementById('btnStart').disabled = false;
+            document.getElementById('btnStop').disabled = true;
+
+            log(`🛑 Đã ngắt kết nối WebSocket (Thợ chuyển OFFLINE).`);
+        }
+    </script>
+</body>
+</html>

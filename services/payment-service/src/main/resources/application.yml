@@ -1,0 +1,40 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: payment-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payment_db?currentSchema=payment_service,public
+    username: postgres
+    password: postgrespassword
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        default_schema: payment_service
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: payment-group
+      auto-offset-reset: earliest
+
+payment:
+  booking-service:
+    url: "http://localhost:8081"
+  commission:
+    rate: 0.15
+  system:
+    escrow-user-id: "00000000-0000-0000-0000-000000000001"
+    revenue-user-id: "00000000-0000-0000-0000-000000000002"
+  momo:
+    partner-code: "MOMO"
+    access-key: "F8BBA842ECF85"
+    secret-key: "K951B6PE1wa8ngfBWja1mi1jnmWbmPDg"
+    endpoint: "https://test-payment.momo.vn/v2/gateway/api/create"
+    redirect-url: "http://localhost:3000/payment/momo/callback"
+    ipn-url: "http://localhost:8085/api/v1/wallets/webhook/momo"
+

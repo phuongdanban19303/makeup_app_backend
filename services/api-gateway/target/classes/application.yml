@@ -1,0 +1,73 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowedHeaders: "*"
+            exposedHeaders:
+              - Authorization
+              - X-Trace-Id
+              - X-User-Id
+              - X-User-Roles
+            allowCredentials: true
+      routes:
+        # Route 1: WebSocket Upgrades ONLY (ws://) - matches when Upgrade header is websocket
+        - id: location-service-ws
+          uri: ws://${LOCATION_SERVICE_HOST:localhost}:8082
+          predicates:
+            - Path=/ws-location/**, /ws/**
+            - Header=Upgrade, (?i).*websocket.*
+
+        # Route 2: Location Service HTTP REST APIs & SockJS Info/Polling (http://)
+        - id: location-service
+          uri: http://${LOCATION_SERVICE_HOST:localhost}:8082
+          predicates:
+            - Path=/api/v1/location/**, /api/v1/workers/**, /ws-location/**, /ws/**
+
+        # Route to User Service (Auth, Users, MUA Profiles)
+        - id: user-service
+          uri: http://${USER_SERVICE_HOST:localhost}:8081
+          predicates:
+            - Path=/api/v1/auth/**, /api/v1/users/**, /api/v1/mua/**
+
+        # Route to Booking Service
+        - id: booking-service
+          uri: http://${BOOKING_SERVICE_HOST:localhost}:8083
+          predicates:
+            - Path=/api/v1/bookings/**
+
+        # Route to Pricing Service
+        - id: pricing-service
+          uri: http://${PRICING_SERVICE_HOST:localhost}:8084
+          predicates:
+            - Path=/api/v1/pricing/**
+
+        # Route to Payment Service
+        - id: payment-service
+          uri: http://${PAYMENT_SERVICE_HOST:localhost}:8085
+          predicates:
+            - Path=/api/v1/payments/**, /api/v1/wallets/**
+
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:MakeupAppSecretKeySuperSecretForJWTTokenGeneration2026!}
