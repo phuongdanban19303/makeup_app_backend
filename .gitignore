@@ -1,0 +1,14 @@
+# IDE Configuration
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Maven Build Directory Rules
+# Mặc định bỏ qua toàn bộ file tạm trong target/ ngoại trừ file đuôi .jar để push lên Git
+target/*
+!target/*.jar
+services/*/target/*
+!services/*/target/*.jar
+common-library/target/*
+!common-library/target/*.jar
