@@ -81,6 +81,7 @@ services:
     ports:
       - "8080:8080"
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx128m -XX:+UseSerialGC"
       USER_SERVICE_HOST: user-service
       LOCATION_SERVICE_HOST: location-service
       BOOKING_SERVICE_HOST: booking-service
@@ -102,6 +103,7 @@ services:
     ports:
       - "8081:8081"
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx180m -XX:+UseSerialGC"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/user_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgrespassword
@@ -122,6 +124,7 @@ services:
     ports:
       - "8082:8082"
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx180m -XX:+UseSerialGC"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/location_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgrespassword
@@ -141,6 +144,7 @@ services:
     ports:
       - "8083:8083"
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx180m -XX:+UseSerialGC"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/booking_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgrespassword
@@ -162,6 +166,7 @@ services:
     ports:
       - "8084:8084"
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx180m -XX:+UseSerialGC"
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
     depends_on:
@@ -176,6 +181,7 @@ services:
     ports:
       - "8085:8085"
     environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx180m -XX:+UseSerialGC"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/payment_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgrespassword
