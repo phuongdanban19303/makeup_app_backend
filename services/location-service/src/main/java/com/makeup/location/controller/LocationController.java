@@ -105,6 +105,7 @@ public class LocationController {
 
             messagingTemplate.convertAndSend(destination1, payload);
             messagingTemplate.convertAndSend(destination2, payload);
+            messagingTemplate.convertAndSend("/topic/workers/alerts", payload);
             log.info(">>> [LOCATION-SERVICE] SUCCESS: Sent direct STOMP alert for MUA [{}]", muaIdObj);
         }
 

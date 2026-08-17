@@ -74,9 +74,10 @@ public class BookingEventListener {
             payload.put("customerPhone", event.getOrDefault("customerPhone", ""));
             payload.put("payload", event);
 
-            // Send to BOTH STOMP topics so worker app popup opens immediately
+            // Send to STOMP topics so worker app popup opens immediately
             messagingTemplate.convertAndSend(destination1, payload);
             messagingTemplate.convertAndSend(destination2, payload);
+            messagingTemplate.convertAndSend("/topic/workers/alerts", payload);
             log.info(">>> [KAFKA-CONSUMER] SUCCESS: Sent WebSocket alert for MUA [{}]", muaIdObj);
         } else {
             log.warn(">>> [KAFKA-CONSUMER] WARNING: Cannot push WebSocket popup: muaId / workerId is null in Kafka event");
@@ -101,6 +102,7 @@ public class BookingEventListener {
 
             messagingTemplate.convertAndSend(destination, Map.of(
                     "type", "BOOKING_ACCEPTED",
+                    "status", "ACCEPTED",
                     "title", "Thợ đã nhận đơn!",
                     "message", "Thợ trang điểm đã chấp nhận đơn và đang chuẩn bị di chuyển.",
                     "payload", event
