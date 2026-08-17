@@ -123,13 +123,18 @@ CREATE TABLE IF NOT EXISTS makeup_services (
 );
 CREATE INDEX IF NOT EXISTS idx_services_mua_id ON makeup_services(mua_id);
 
-CREATE TABLE IF NOT EXISTS mua_portfolios (
-    id BIGSERIAL PRIMARY KEY,
-    mua_id BIGINT NOT NULL REFERENCES mua_profiles(user_id) ON DELETE CASCADE,
-    image_url VARCHAR(255) NOT NULL,
-    caption VARCHAR(255),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+-- ==========================================
+-- SEED DEMO USERS & MUA PROFILES
+-- ==========================================
+INSERT INTO users (id, phone, email, password_hash, full_name, is_active) VALUES
+    (1, '0901234567', 'customer@makeupapp.com', '$2a$10$76543210fedcba9876543210fedcba9876543210', 'Nguyễn Văn Khách', TRUE),
+    (2, '0987654321', 'mua.khanhlinh@makeupapp.com', '$2a$10$76543210fedcba9876543210fedcba9876543210', 'MUA Khánh Linh', TRUE)
+ON CONFLICT (id) DO UPDATE SET full_name = EXCLUDED.full_name;
+
+INSERT INTO mua_profiles (user_id, avatar_url, bio, is_verified, rating, total_reviews, total_completed_jobs, current_status) VALUES
+    (2, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80', 'Chuyên gia trang điểm cô dâu & sự kiện 5 năm kinh nghiệm', TRUE, 5.00, 12, 45, 'ONLINE')
+ON CONFLICT (user_id) DO UPDATE SET avatar_url = EXCLUDED.avatar_url, bio = EXCLUDED.bio, current_status = EXCLUDED.current_status;
+
 
 /* =================================================================================
    PHẦN 2: PAYMENT SERVICE (PostgreSQL v2.0.0) - Quản lý ví điện tử, Sổ cái & Ví tạm giữ

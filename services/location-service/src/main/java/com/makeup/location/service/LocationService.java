@@ -45,7 +45,8 @@ public class LocationService {
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
 
     /**
-     * Xóa thông tin vị trí thợ khỏi Redis GEO khi thợ ấn "Tắt hoạt động" (Go Offline).
+     * Xóa thông tin vị trí thợ khỏi Redis GEO khi thợ ấn "Tắt hoạt động" (Go
+     * Offline).
      */
     public void removeWorkerLocation(Long workerId) {
         if (workerId == null) {
@@ -58,9 +59,12 @@ public class LocationService {
 
     /**
      * Tiếp nhận stream tọa độ GPS từ Thợ (MUA) ứng dụng ONLINE.
-     * 1. Cập nhật vị trí realtime vào Redis GEO key mua_realtime_locations bằng GEOADD.
-     * 2. Đẩy tọa độ GPS thời gian thực qua WebSocket tới Customer App để vẽ đường đi trên bản đồ.
-     * 3. Gọi phương thức bất đồng bộ (@Async) để ghi nhật ký di chuyển vào PostgreSQL.
+     * 1. Cập nhật vị trí realtime vào Redis GEO key mua_realtime_locations bằng
+     * GEOADD.
+     * 2. Đẩy tọa độ GPS thời gian thực qua WebSocket tới Customer App để vẽ đường
+     * đi trên bản đồ.
+     * 3. Gọi phương thức bất đồng bộ (@Async) để ghi nhật ký di chuyển vào
+     * PostgreSQL.
      */
     public void processLocationStream(WorkerLocationStreamDto dto) {
         if (dto == null || dto.getWorkerId() == null) {
@@ -72,12 +76,12 @@ public class LocationService {
         redisTemplate.opsForGeo().add(
                 REDIS_GEO_KEY,
                 new Point(dto.getLongitude(), dto.getLatitude()),
-                dto.getWorkerId().toString()
-        );
+                dto.getWorkerId().toString());
         log.debug("GEOADD updated Redis key '{}' for workerId: {}, lat: {}, lng: {}",
                 REDIS_GEO_KEY, dto.getWorkerId(), dto.getLatitude(), dto.getLongitude());
 
-        // 2. Đẩy stream tọa độ GPS thời gian thực tới WebSocket Destination cho Khách theo dõi trên bản đồ
+        // 2. Đẩy stream tọa độ GPS thời gian thực tới WebSocket Destination cho Khách
+        // theo dõi trên bản đồ
         if (dto.getBookingId() != null && !dto.getBookingId().isBlank()) {
             String bookingTopic = "/topic/booking/" + dto.getBookingId() + "/location";
             messagingTemplate.convertAndSend(bookingTopic, Map.of(
@@ -86,8 +90,7 @@ public class LocationService {
                     "bookingId", dto.getBookingId(),
                     "latitude", dto.getLatitude(),
                     "longitude", dto.getLongitude(),
-                    "timestamp", dto.getTimestamp() != null ? dto.getTimestamp() : System.currentTimeMillis()
-            ));
+                    "timestamp", dto.getTimestamp() != null ? dto.getTimestamp() : System.currentTimeMillis()));
             log.debug("Broadcast live GPS tracking to WebSocket topic [{}]", bookingTopic);
         }
 
@@ -96,15 +99,15 @@ public class LocationService {
     }
 
     /**
-     * Ghi nhận vết lịch sử di chuyển vào cơ sở dữ liệu PostgreSQL (mua_location_history)
+     * Ghi nhận vết lịch sử di chuyển vào cơ sở dữ liệu PostgreSQL
+     * (mua_location_history)
      * Bất đồng bộ (@Async) để không gây nghẽn luồng xử lý WebSocket.
      */
     @Async
     public void saveLocationHistoryAsync(WorkerLocationStreamDto dto) {
         try {
             org.locationtech.jts.geom.Point jtsPoint = geometryFactory.createPoint(
-                    new Coordinate(dto.getLongitude(), dto.getLatitude())
-            );
+                    new Coordinate(dto.getLongitude(), dto.getLatitude()));
 
             MuaLocationHistoryEntity historyEntity = MuaLocationHistoryEntity.builder()
                     .muaId(dto.getWorkerId())
@@ -121,8 +124,10 @@ public class LocationService {
     }
 
     /**
-     * Tìm kiếm danh sách thợ trang điểm gần nhất trong bán kính radiusKm (km) bằng GEOSEARCH của Redis GEO.
-     * Tích hợp gọi Batch Query từ user-service để bổ sung thông tin profile (tên, rating, tổng số đơn, trạng thái).
+     * Tìm kiếm danh sách thợ trang điểm gần nhất trong bán kính radiusKm (km) bằng
+     * GEOSEARCH của Redis GEO.
+     * Tích hợp gọi Batch Query từ user-service để bổ sung thông tin profile (tên,
+     * rating, tổng số đơn, trạng thái).
      */
     public List<NearbyWorkerDto> findNearbyWorkers(double latitude, double longitude, double radiusKm) {
         RedisGeoCommands.GeoSearchCommandArgs args = RedisGeoCommands.GeoSearchCommandArgs
@@ -135,8 +140,7 @@ public class LocationService {
                 REDIS_GEO_KEY,
                 GeoReference.fromCoordinate(longitude, latitude),
                 GeoShape.byRadius(new Distance(radiusKm, Metrics.KILOMETERS)),
-                args
-        );
+                args);
 
         if (results == null || results.getContent().isEmpty()) {
             return List.of();
@@ -164,17 +168,24 @@ public class LocationService {
         // Bổ sung thông tin chi tiết thợ từ user-service (Batch Query)
         Map<Long, MuaSummaryDto> summaryMap = fetchWorkerSummariesMap(workerIds);
 
+        String defaultAvatar = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80";
         for (NearbyWorkerDto dto : nearbyWorkers) {
             MuaSummaryDto summary = summaryMap.get(dto.getWorkerId());
             if (summary != null) {
-                dto.setFullName(summary.getFullName());
-                dto.setAvatarUrl(summary.getAvatarUrl());
-                dto.setRating(summary.getRating());
-                dto.setTotalCompletedJobs(summary.getTotalCompletedJobs());
-                dto.setCurrentStatus(summary.getCurrentStatus());
+                dto.setFullName(
+                        summary.getFullName() != null && !summary.getFullName().isBlank() ? summary.getFullName()
+                                : "Chuyên Gia MUA #" + dto.getWorkerId());
+                dto.setAvatarUrl(
+                        summary.getAvatarUrl() != null && !summary.getAvatarUrl().isBlank() ? summary.getAvatarUrl()
+                                : defaultAvatar);
+                dto.setRating(summary.getRating() != null ? summary.getRating() : 5.0);
+                dto.setTotalCompletedJobs(
+                        summary.getTotalCompletedJobs() != null ? summary.getTotalCompletedJobs() : 0);
+                dto.setCurrentStatus(summary.getCurrentStatus() != null ? summary.getCurrentStatus() : "ONLINE");
                 dto.setServices(summary.getServices() != null ? summary.getServices() : List.of());
             } else {
-                dto.setFullName("MUA #" + dto.getWorkerId());
+                dto.setFullName("Chuyên Gia MUA #" + dto.getWorkerId());
+                dto.setAvatarUrl(defaultAvatar);
                 dto.setRating(5.0);
                 dto.setTotalCompletedJobs(0);
                 dto.setCurrentStatus("ONLINE");
@@ -186,16 +197,18 @@ public class LocationService {
     }
 
     /**
-     * Tìm kiếm danh sách thợ gần nhất có lọc theo Danh mục yêu cầu (category) và Kỹ năng/Sub-services cần thiết.
+     * Tìm kiếm danh sách thợ gần nhất có lọc theo Danh mục yêu cầu (category) và Kỹ
+     * năng/Sub-services cần thiết.
      */
     public List<NearbyWorkerDto> findNearbyWorkers(double latitude, double longitude, double radiusKm,
-                                                   String category, List<String> requiredSubServices) {
+            String category, List<String> requiredSubServices) {
         List<NearbyWorkerDto> candidates = findNearbyWorkers(latitude, longitude, radiusKm);
         if (candidates.isEmpty()) {
             return candidates;
         }
 
-        if ((category == null || category.isBlank()) && (requiredSubServices == null || requiredSubServices.isEmpty())) {
+        if ((category == null || category.isBlank())
+                && (requiredSubServices == null || requiredSubServices.isEmpty())) {
             return candidates;
         }
 
@@ -204,15 +217,14 @@ public class LocationService {
                 return false;
             }
             return worker.getServices().stream().anyMatch(service -> {
-                boolean matchCat = (category == null || category.isBlank()) 
+                boolean matchCat = (category == null || category.isBlank())
                         || category.equalsIgnoreCase(service.getCategory());
-                
+
                 boolean matchSub = true;
                 if (requiredSubServices != null && !requiredSubServices.isEmpty()) {
                     List<String> workerSubs = service.getSubServices() != null ? service.getSubServices() : List.of();
-                    matchSub = requiredSubServices.stream().allMatch(req -> 
-                        workerSubs.stream().anyMatch(ws -> ws.equalsIgnoreCase(req))
-                    );
+                    matchSub = requiredSubServices.stream()
+                            .allMatch(req -> workerSubs.stream().anyMatch(ws -> ws.equalsIgnoreCase(req)));
                 }
                 return matchCat && matchSub;
             });

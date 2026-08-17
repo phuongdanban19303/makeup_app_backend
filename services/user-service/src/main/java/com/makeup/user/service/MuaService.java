@@ -86,7 +86,8 @@ public class MuaService {
         MuaProfileEntity profile = muaProfileRepository.findById(muaId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND, "MUA profile not found"));
 
-        if (dto.getBio() != null) profile.setBio(dto.getBio());
+        if (dto.getBio() != null)
+            profile.setBio(dto.getBio());
         if (dto.getAvatarUrl() != null) {
             profile.setAvatarUrl(dto.getAvatarUrl());
             userRepository.findById(muaId).ifPresent(user -> {
@@ -94,8 +95,10 @@ public class MuaService {
                 userRepository.save(user);
             });
         }
-        if (dto.getIdentityCardUrl() != null) profile.setIdentityCardUrl(dto.getIdentityCardUrl());
-        if (dto.getCurrentStatus() != null) profile.setCurrentStatus(dto.getCurrentStatus().toUpperCase());
+        if (dto.getIdentityCardUrl() != null)
+            profile.setIdentityCardUrl(dto.getIdentityCardUrl());
+        if (dto.getCurrentStatus() != null)
+            profile.setCurrentStatus(dto.getCurrentStatus().toUpperCase());
 
         muaProfileRepository.save(profile);
         return getMuaProfile(muaId);
@@ -217,7 +220,8 @@ public class MuaService {
     }
 
     @Transactional
-    public ProviderServiceResponseDto updateBundleService(Long providerId, Long serviceId, ProviderServiceRequestDto dto) {
+    public ProviderServiceResponseDto updateBundleService(Long providerId, Long serviceId,
+            ProviderServiceRequestDto dto) {
         ProviderServiceEntity entity = providerServiceRepository.findById(serviceId)
                 .orElseThrow(() -> new AppException(ErrorCode.INVALID_REQUEST, "Bundle service package not found"));
 
@@ -296,7 +300,8 @@ public class MuaService {
     // ==========================================
 
     @Transactional
-    public MuaPortfolioResponseDto addPortfolioImage(Long muaId, MultipartFile file, String imageUrlParam, String caption) {
+    public MuaPortfolioResponseDto addPortfolioImage(Long muaId, MultipartFile file, String imageUrlParam,
+            String caption) {
         if (!userRepository.existsById(muaId)) {
             throw new AppException(ErrorCode.USER_NOT_FOUND, "MUA user not found");
         }
@@ -354,7 +359,8 @@ public class MuaService {
         Map<Long, MuaProfileEntity> profileMap = muaProfileRepository.findAllById(muaIds).stream()
                 .collect(Collectors.toMap(MuaProfileEntity::getUserId, p -> p));
 
-        Map<Long, List<ProviderServiceResponseDto>> servicesMap = providerServiceRepository.findByProviderIdInAndIsActiveTrue(muaIds).stream()
+        Map<Long, List<ProviderServiceResponseDto>> servicesMap = providerServiceRepository
+                .findByProviderIdInAndIsActiveTrue(muaIds).stream()
                 .map(this::mapToProviderServiceResponse)
                 .collect(Collectors.groupingBy(ProviderServiceResponseDto::getProviderId));
 
@@ -369,7 +375,9 @@ public class MuaService {
                     .fullName(user != null ? user.getFullName() : "MUA #" + id)
                     .avatarUrl(avatar)
                     .rating((profile != null && profile.getRating() != null) ? profile.getRating().doubleValue() : 5.0)
-                    .totalCompletedJobs((profile != null && profile.getTotalCompletedJobs() != null) ? profile.getTotalCompletedJobs() : 0)
+                    .totalCompletedJobs((profile != null && profile.getTotalCompletedJobs() != null)
+                            ? profile.getTotalCompletedJobs()
+                            : 0)
                     .currentStatus(profile != null ? profile.getCurrentStatus() : "OFFLINE")
                     .services(servicesMap.getOrDefault(id, List.of()))
                     .build();
