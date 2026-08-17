@@ -150,6 +150,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: postgrespassword
       SPRING_DATA_MONGODB_URI: mongodb://mongo:mongopassword@mongodb:27017/booking_db?authSource=admin
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     depends_on:
       postgres:
         condition: service_healthy
@@ -157,6 +159,8 @@ services:
         condition: service_started
       kafka:
         condition: service_started
+
+
 
   pricing-service:
     build:
