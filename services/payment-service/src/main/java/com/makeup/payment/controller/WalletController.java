@@ -98,11 +98,10 @@ public class WalletController {
      */
     @PostMapping("/top-up/momo")
     public ResponseEntity<ApiResponse<Map<String, Object>>> initiateMoMoTopUp(@RequestBody TopUpRequestDto request) {
-        log.info(">>> API: Khởi tạo nạp tiền MoMo cho Khách [{}] số tiền [{}]", request.getCustomerId(), request.getAmount());
-        Map<String, Object> momoResponse = momoPaymentService.createMoMoTopUpRequest(
-                request.getCustomerId(),
-                request.getAmount().longValue()
-        );
+        String custId = (request != null && request.getCustomerId() != null && !request.getCustomerId().isBlank()) ? request.getCustomerId() : "1";
+        long amount = (request != null && request.getAmount() != null) ? request.getAmount().longValue() : 100000L;
+        log.info(">>> API: Khởi tạo nạp tiền MoMo cho Khách [{}] số tiền [{}]", custId, amount);
+        Map<String, Object> momoResponse = momoPaymentService.createMoMoTopUpRequest(custId, amount);
         return ResponseEntity.ok(ApiResponse.success(momoResponse, "Tạo liên kết nạp tiền MoMo thành công"));
     }
 

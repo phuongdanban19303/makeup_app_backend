@@ -29,8 +29,8 @@ public class WorkerLocationRestController {
     @GetMapping("/nearby")
     @Operation(summary = "Tìm danh sách thợ gần nhất", description = "Sử dụng lệnh GEOSEARCH trong Redis GEO để truy vấn danh sách thợ ONLINE trong bán kính X km, hỗ trợ lọc theo Category & Kỹ năng sub-services")
     public ResponseEntity<ApiResponse<List<NearbyWorkerDto>>> getNearbyWorkers(
-            @Parameter(description = "Vĩ độ khách hàng (Latitude)", example = "10.776889") @RequestParam double latitude,
-            @Parameter(description = "Kinh độ khách hàng (Longitude)", example = "106.700806") @RequestParam double longitude,
+            @Parameter(description = "Vĩ độ khách hàng (Latitude)", example = "10.776889") @RequestParam(defaultValue = "10.776889") double latitude,
+            @Parameter(description = "Kinh độ khách hàng (Longitude)", example = "106.700806") @RequestParam(defaultValue = "106.700806") double longitude,
             @Parameter(description = "Bán kính tìm kiếm tính theo km", example = "5.0") @RequestParam(defaultValue = "5.0") double radiusKm,
             @Parameter(description = "Danh mục yêu cầu (e.g. BRIDAL, EVENT, STAGE)") @RequestParam(required = false) String category,
             @Parameter(description = "Danh sách sub-services/kỹ năng yêu cầu (e.g. MAKEUP_FACE, HAIR_STYLING)") @RequestParam(required = false) List<String> requiredSubServices) {
