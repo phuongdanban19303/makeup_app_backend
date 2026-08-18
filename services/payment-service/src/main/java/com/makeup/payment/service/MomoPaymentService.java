@@ -56,6 +56,12 @@ public class MomoPaymentService {
      */
     @SuppressWarnings("unchecked")
     public Map<String, Object> createMoMoTopUpRequest(String customerId, long amount) {
+        String pCode = partnerCode != null ? partnerCode.trim() : "MOMO";
+        String aKey = accessKey != null ? accessKey.trim() : "F8BBA842ECF85";
+        String sKey = secretKey != null ? secretKey.trim() : "K951B6PE1wa8ngfBWja1mi1jnmWbmPDg";
+        String rUrl = redirectUrl != null ? redirectUrl.trim() : "https://muamake.duckdns.org/payment/momo/callback";
+        String iUrl = ipnUrl != null ? ipnUrl.trim() : "https://muamake.duckdns.org/api/v1/wallets/webhook/momo";
+
         String orderId = "TOPUP_MOMO_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 6);
         String requestId = UUID.randomUUID().toString();
         String orderInfo = "Nap tien vi khach hang " + customerId;
@@ -63,31 +69,33 @@ public class MomoPaymentService {
         String extraData = "customerId=" + customerId;
 
         // BƯỚC 1: Tạo chuỗi Raw Signature theo định dạng bắt buộc của MoMo v2
-        String rawSignature = "accessKey=" + accessKey +
+        String rawSignature = "accessKey=" + aKey +
                 "&amount=" + amount +
                 "&extraData=" + extraData +
-                "&ipnUrl=" + ipnUrl +
+                "&ipnUrl=" + iUrl +
                 "&orderId=" + orderId +
                 "&orderInfo=" + orderInfo +
-                "&partnerCode=" + partnerCode +
-                "&redirectUrl=" + redirectUrl +
+                "&partnerCode=" + pCode +
+                "&redirectUrl=" + rUrl +
                 "&requestId=" + requestId +
                 "&requestType=" + requestType;
 
         // BƯỚC 2: Ký số chữ ký điện tử HMAC-SHA256
-        String signature = hmacSha256(rawSignature, secretKey);
+        String signature = hmacSha256(rawSignature, sKey);
+        log.info(">>> MoMo Raw Signature String: [{}]", rawSignature);
+        log.info(">>> Generated MoMo Signature: [{}]", signature);
 
         // BƯỚC 3: Đóng gói JSON Payload gửi sang MoMo
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("partnerCode", partnerCode);
+        requestBody.put("partnerCode", pCode);
         requestBody.put("partnerName", "MakeupApp Platform");
         requestBody.put("storeId", "MakeupApp");
         requestBody.put("requestId", requestId);
         requestBody.put("amount", amount);
         requestBody.put("orderId", orderId);
         requestBody.put("orderInfo", orderInfo);
-        requestBody.put("redirectUrl", redirectUrl);
-        requestBody.put("ipnUrl", ipnUrl);
+        requestBody.put("redirectUrl", rUrl);
+        requestBody.put("ipnUrl", iUrl);
         requestBody.put("lang", "vi");
         requestBody.put("extraData", extraData);
         requestBody.put("requestType", requestType);
