@@ -58,7 +58,7 @@ public class MomoPaymentService {
     public Map<String, Object> createMoMoTopUpRequest(String customerId, long amount) {
         String orderId = "TOPUP_MOMO_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 6);
         String requestId = UUID.randomUUID().toString();
-        String orderInfo = "Nap tien vi khach hang #" + customerId;
+        String orderInfo = "Nap tien vi khach hang " + customerId;
         String requestType = "captureWallet";
         String extraData = "customerId=" + customerId;
 
@@ -107,6 +107,12 @@ public class MomoPaymentService {
             log.info(">>> Nhận phản hồi THẬT từ MoMo Gateway: {}", responseMap);
 
             if (responseMap != null) {
+                Object resultCodeObj = responseMap.get("resultCode");
+                if (resultCodeObj != null && !Integer.valueOf(0).equals(resultCodeObj) && !"0".equals(String.valueOf(resultCodeObj))) {
+                    String momoErrMsg = String.valueOf(responseMap.getOrDefault("message", "Lỗi chữ ký hoặc tham số MoMo"));
+                    log.error(">>> [ERROR] MoMo Gateway trả về lỗi resultCode [{}]: {}", resultCodeObj, momoErrMsg);
+                    throw new RuntimeException("Cổng MoMo trả về lỗi (code " + resultCodeObj + "): " + momoErrMsg);
+                }
                 return responseMap;
             } else {
                 throw new RuntimeException("Phản hồi từ cổng thanh toán MoMo rỗng!");
