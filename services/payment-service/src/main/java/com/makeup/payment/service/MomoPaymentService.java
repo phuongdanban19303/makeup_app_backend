@@ -113,22 +113,10 @@ public class MomoPaymentService {
             }
         } catch (org.springframework.web.client.HttpStatusCodeException e) {
             log.error(">>> [ERROR] MoMo API Gateway HTTP Status: {}, Response Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
-            Map<String, Object> fallback = new HashMap<>(requestBody);
-            String mockPayUrl = redirectUrl + (redirectUrl.contains("?") ? "&" : "?") + "orderId=" + orderId + "&requestId=" + requestId + "&resultCode=0&amount=" + amount + "&message=Success";
-            fallback.put("payUrl", mockPayUrl);
-            fallback.put("qrCodeUrl", mockPayUrl);
-            fallback.put("resultCode", 0);
-            fallback.put("message", "MoMo Sandbox Test Mode: " + e.getResponseBodyAsString());
-            return fallback;
+            throw new RuntimeException("Cổng thanh toán MoMo trả về lỗi (HTTP " + e.getStatusCode() + "): " + e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error(">>> [ERROR] Lỗi kết nối HTTP POST tới MoMo Payment Gateway!", e);
-            Map<String, Object> fallback = new HashMap<>(requestBody);
-            String mockPayUrl = redirectUrl + (redirectUrl.contains("?") ? "&" : "?") + "orderId=" + orderId + "&requestId=" + requestId + "&resultCode=0&amount=" + amount + "&message=Success";
-            fallback.put("payUrl", mockPayUrl);
-            fallback.put("qrCodeUrl", mockPayUrl);
-            fallback.put("resultCode", 0);
-            fallback.put("message", "MoMo Sandbox Test Mode: " + e.getMessage());
-            return fallback;
+            throw new RuntimeException("Lỗi khởi tạo giao dịch MoMo: " + e.getMessage(), e);
         }
     }
 
