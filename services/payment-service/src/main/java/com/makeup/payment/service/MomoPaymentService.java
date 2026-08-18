@@ -66,7 +66,7 @@ public class MomoPaymentService {
         String requestId = UUID.randomUUID().toString();
         String orderInfo = "Nap tien vi khach hang " + customerId;
         String requestType = "captureWallet";
-        String extraData = "customerId=" + customerId;
+        String extraData = "";
 
         // BƯỚC 1: Tạo chuỗi Raw Signature theo định dạng bắt buộc của MoMo v2
         String rawSignature = "accessKey=" + aKey +
@@ -82,8 +82,9 @@ public class MomoPaymentService {
 
         // BƯỚC 2: Ký số chữ ký điện tử HMAC-SHA256
         String signature = hmacSha256(rawSignature, sKey);
-        log.info(">>> MoMo Raw Signature String: [{}]", rawSignature);
-        log.info(">>> Generated MoMo Signature: [{}]", signature);
+        log.info(">>> [MOMO-DEBUG] PartnerCode: [{}], AccessKey: [{}]", pCode, aKey);
+        log.info(">>> [MOMO-DEBUG] MoMo Raw Signature String: [{}]", rawSignature);
+        log.info(">>> [MOMO-DEBUG] Generated MoMo Signature: [{}]", signature);
 
         // BƯỚC 3: Đóng gói JSON Payload gửi sang MoMo
         Map<String, Object> requestBody = new HashMap<>();

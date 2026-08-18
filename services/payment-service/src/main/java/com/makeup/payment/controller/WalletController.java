@@ -106,6 +106,19 @@ public class WalletController {
     }
 
     /**
+     * API Test trực tiếp MoMo qua trình duyệt hoặc cURL (GET)
+     * GET /api/v1/wallets/test-momo?customerId=1&amount=50000
+     */
+    @GetMapping("/test-momo")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> testMoMoTopUp(
+            @RequestParam(defaultValue = "1") String customerId,
+            @RequestParam(defaultValue = "50000") long amount) {
+        log.info(">>> TEST API: Test nạp tiền MoMo cho Khách [{}] số tiền [{}]", customerId, amount);
+        Map<String, Object> momoResponse = momoPaymentService.createMoMoTopUpRequest(customerId, amount);
+        return ResponseEntity.ok(ApiResponse.success(momoResponse, "Test liên kết nạp tiền MoMo thành công"));
+    }
+
+    /**
      * API 5: Webhook Callback IPN từ Cổng thanh toán MoMo.
      * Sau khi khách trừ tiền trên App MoMo, MoMo sẽ tự động POST thông báo kết quả về API này.
      * 
