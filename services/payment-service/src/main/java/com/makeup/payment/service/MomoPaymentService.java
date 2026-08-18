@@ -58,7 +58,7 @@ public class MomoPaymentService {
     public Map<String, Object> createMoMoTopUpRequest(String customerId, long amount) {
         String orderId = "TOPUP_MOMO_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 6);
         String requestId = UUID.randomUUID().toString();
-        String orderInfo = "Nap tien vi khach hàng #" + customerId;
+        String orderInfo = "Nap tien vi khach hang #" + customerId;
         String requestType = "captureWallet";
         String extraData = "customerId=" + customerId;
 
