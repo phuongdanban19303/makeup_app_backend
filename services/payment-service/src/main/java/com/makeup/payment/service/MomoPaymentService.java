@@ -29,22 +29,22 @@ public class MomoPaymentService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @Value("${payment.momo.partner-code:MOMO}")
+    @Value("${payment.momo.partner-code:MOMOBKUN20180529}")
     private String partnerCode;
 
-    @Value("${payment.momo.access-key:F8BBA842ECF85}")
+    @Value("${payment.momo.access-key:klm05TvNBzhg7h31}")
     private String accessKey;
 
-    @Value("${payment.momo.secret-key:K951B6PE1wa8ngfBWja1mi1jnmWbmPDg}")
+    @Value("${payment.momo.secret-key:at67qH6mk8w5Y1nAyMoYKMWACiEi2xAl}")
     private String secretKey;
 
     @Value("${payment.momo.endpoint:https://test-payment.momo.vn/v2/gateway/api/create}")
     private String endpoint;
 
-    @Value("${payment.momo.redirect-url:http://localhost:3000/payment/momo/callback}")
+    @Value("${payment.momo.redirect-url:http://localhost:3000/payment/result}")
     private String redirectUrl;
 
-    @Value("${payment.momo.ipn-url:http://localhost:8085/api/v1/wallets/webhook/momo}")
+    @Value("${payment.momo.ipn-url:http://203.145.46.255:8085/api/v1/wallets/webhook/momo}")
     private String ipnUrl;
 
     /**
@@ -56,17 +56,17 @@ public class MomoPaymentService {
      */
     @SuppressWarnings("unchecked")
     public Map<String, Object> createMoMoTopUpRequest(String customerId, long amount) {
-        String pCode = partnerCode != null ? partnerCode.trim() : "MOMO";
-        String aKey = accessKey != null ? accessKey.trim() : "F8BBA842ECF85";
-        String sKey = secretKey != null ? secretKey.trim() : "K951B6PE1wa8ngfBWja1mi1jnmWbmPDg";
-        String rUrl = redirectUrl != null ? redirectUrl.trim() : "https://muamake.duckdns.org/payment/momo/callback";
-        String iUrl = ipnUrl != null ? ipnUrl.trim() : "https://muamake.duckdns.org/api/v1/wallets/webhook/momo";
+        String pCode = partnerCode != null ? partnerCode.trim() : "MOMOBKUN20180529";
+        String aKey = accessKey != null ? accessKey.trim() : "klm05TvNBzhg7h31";
+        String sKey = secretKey != null ? secretKey.trim() : "at67qH6mk8w5Y1nAyMoYKMWACiEi2xAl";
+        String rUrl = redirectUrl != null ? redirectUrl.trim() : "http://localhost:3000/payment/result";
+        String iUrl = ipnUrl != null ? ipnUrl.trim() : "http://203.145.46.255:8085/api/v1/wallets/webhook/momo";
 
         String orderId = "TOPUP_MOMO_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 6);
         String requestId = UUID.randomUUID().toString();
         String orderInfo = "Nap tien vi khach hang " + customerId;
         String requestType = "captureWallet";
-        String extraData = "";
+        String extraData = "customerId=" + customerId;
 
         // BƯỚC 1: Tạo chuỗi Raw Signature theo định dạng bắt buộc của MoMo v2
         String rawSignature = "accessKey=" + aKey +

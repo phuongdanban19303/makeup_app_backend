@@ -17,6 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -125,8 +126,18 @@ public class WalletController {
      * POST /api/v1/wallets/webhook/momo
      */
     @PostMapping("/webhook/momo")
-    public ResponseEntity<Map<String, Object>> handleMoMoWebhook(@RequestParam Map<String, String> webhookParams) {
-        log.info(">>> API: Đã nhận MoMo Webhook IPN Callback: {}", webhookParams);
+    public ResponseEntity<Map<String, Object>> handleMoMoWebhook(@RequestBody(required = false) Map<String, Object> rawPayload, @RequestParam(required = false) Map<String, String> rawParams) {
+        log.info(">>> API: Đã nhận MoMo Webhook IPN Callback Payload: {}, Params: {}", rawPayload, rawParams);
+
+        Map<String, String> webhookParams = new HashMap<>();
+        if (rawParams != null && !rawParams.isEmpty()) {
+            webhookParams.putAll(rawParams);
+        }
+        if (rawPayload != null && !rawPayload.isEmpty()) {
+            for (Map.Entry<String, Object> entry : rawPayload.entrySet()) {
+                webhookParams.put(entry.getKey(), entry.getValue() != null ? String.valueOf(entry.getValue()) : "");
+            }
+        }
 
         // BƯỚC 1: Xác thực chữ ký mã hóa HMAC Signature bảo mật
         boolean isValid = momoPaymentService.verifyMoMoSignature(webhookParams);
