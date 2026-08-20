@@ -32,10 +32,10 @@ public class MomoPaymentService {
     @Value("${payment.momo.partner-code:MOMOBKUN20180529}")
     private String partnerCode;
 
-    @Value("${payment.momo.access-key:klm05TvNBzhg7h31}")
+    @Value("${payment.momo.access-key:klm05TvNBzhg7h7j}")
     private String accessKey;
 
-    @Value("${payment.momo.secret-key:at67qH6mk8w5Y1nAyMoYKMWACiEi2xAl}")
+    @Value("${payment.momo.secret-key:at67qH6mk8w5Y1nAyMoYKMWACiEi2bsa}")
     private String secretKey;
 
     @Value("${payment.momo.endpoint:https://test-payment.momo.vn/v2/gateway/api/create}")
@@ -57,8 +57,8 @@ public class MomoPaymentService {
     @SuppressWarnings("unchecked")
     public Map<String, Object> createMoMoTopUpRequest(String customerId, long amount) {
         String pCode = partnerCode != null ? partnerCode.trim() : "MOMOBKUN20180529";
-        String aKey = accessKey != null ? accessKey.trim() : "klm05TvNBzhg7h31";
-        String sKey = secretKey != null ? secretKey.trim() : "at67qH6mk8w5Y1nAyMoYKMWACiEi2xAl";
+        String aKey = accessKey != null ? accessKey.trim() : "klm05TvNBzhg7h7j";
+        String sKey = secretKey != null ? secretKey.trim() : "at67qH6mk8w5Y1nAyMoYKMWACiEi2bsa";
         String rUrl = redirectUrl != null ? redirectUrl.trim() : "http://localhost:3000/payment/result";
         String iUrl = ipnUrl != null ? ipnUrl.trim() : "http://203.145.46.255:8085/api/v1/wallets/webhook/momo";
 

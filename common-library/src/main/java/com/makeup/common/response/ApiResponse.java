@@ -39,7 +39,7 @@ public class ApiResponse<T> {
                 .code(ErrorCode.SUCCESS.getCode())
                 .message(ErrorCode.SUCCESS.getMessage())
                 .data(data)
-                .timestamp(Instant.now().toString())
+                .timestamp(resolveCurrentTimestamp())
                 .path(resolveCurrentPath())
                 .traceId(resolveTraceId())
                 .build();
@@ -52,7 +52,7 @@ public class ApiResponse<T> {
                 .code(ErrorCode.SUCCESS.getCode())
                 .message(message)
                 .data(data)
-                .timestamp(Instant.now().toString())
+                .timestamp(resolveCurrentTimestamp())
                 .path(resolveCurrentPath())
                 .traceId(resolveTraceId())
                 .build();
@@ -66,7 +66,7 @@ public class ApiResponse<T> {
                 .message(ErrorCode.SUCCESS.getMessage())
                 .data(data)
                 .meta(meta)
-                .timestamp(Instant.now().toString())
+                .timestamp(resolveCurrentTimestamp())
                 .path(resolveCurrentPath())
                 .traceId(resolveTraceId())
                 .build();
@@ -78,7 +78,7 @@ public class ApiResponse<T> {
                 .status(status.value())
                 .code(code)
                 .message(message)
-                .timestamp(Instant.now().toString())
+                .timestamp(resolveCurrentTimestamp())
                 .path(resolveCurrentPath())
                 .traceId(resolveTraceId())
                 .build();
@@ -90,6 +90,10 @@ public class ApiResponse<T> {
 
     public static <T> ApiResponse<T> error(ErrorCode errorCode, String customMessage) {
         return error(errorCode.getHttpStatus(), errorCode.getCode(), customMessage);
+    }
+
+    private static String resolveCurrentTimestamp() {
+        return java.time.LocalDateTime.now().toString();
     }
 
     private static String resolveCurrentPath() {

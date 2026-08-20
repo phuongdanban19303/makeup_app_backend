@@ -38,7 +38,7 @@ public class GlobalExceptionHandler {
                 .code(ErrorCode.INVALID_REQUEST.getCode())
                 .message("Validation failed for input fields")
                 .data(errors)
-                .timestamp(java.time.Instant.now().toString())
+                .timestamp(java.time.LocalDateTime.now().toString())
                 .build();
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
