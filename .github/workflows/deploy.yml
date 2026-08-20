@@ -1,0 +1,136 @@
+name: CI/CD Pipeline - Build, Push to GHCR and Deploy to VPS
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  # GIAI ĐOẠN 1: Build file .jar và đẩy Docker Images lên GHCR
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      # 1. Build tất cả file .jar trên GitHub Actions Runner (Không tốn tài nguyên VPS)
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      # 2. Đăng nhập vào GHCR bằng Token tự động
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 3. Chuyển tên repository về chữ thường (lowercase) để đảm bảo chuẩn Docker Tag
+      - name: Downcase REPO name
+        run: |
+          echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> ${GITHUB_ENV}
+
+      # 4. Build & Push API Gateway Image
+      - name: Build & Push API Gateway
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: services/api-gateway/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.REPO_LC }}/api-gateway:latest
+
+      # 5. Build & Push User Service Image
+      - name: Build & Push User Service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: services/user-service/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.REPO_LC }}/user-service:latest
+
+      # 6. Build & Push Location Service Image
+      - name: Build & Push Location Service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: services/location-service/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.REPO_LC }}/location-service:latest
+
+      # 7. Build & Push Booking Service Image
+      - name: Build & Push Booking Service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: services/booking-service/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.REPO_LC }}/booking-service:latest
+
+      # 8. Build & Push Pricing Service Image
+      - name: Build & Push Pricing Service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: services/pricing-service/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.REPO_LC }}/pricing-service:latest
+
+      # 9. Build & Push Payment Service Image
+      - name: Build & Push Payment Service
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: services/payment-service/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.REPO_LC }}/payment-service:latest
+
+  # GIAI ĐOẠN 2: Tự động SSH vào VPS và triển khai
+  deploy-to-vps:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: SSH and Deploy on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            cd /var/www/makeup_app/backend
+
+            # 1. Cập nhật mã nguồn mới nhất trên VPS (nếu có cập nhật docker-compose.yml)
+            git pull origin main || true
+
+            # 2. Đăng nhập GHCR trên VPS bằng token tự sinh từ action
+            echo "${{ secrets.GITHUB_TOKEN }}" | sudo docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+            # 3. Export biến môi trường tên repo chữ thường cho docker-compose
+            export GITHUB_REPOSITORY=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+
+            # 4. Kéo image mới từ GHCR về VPS
+            sudo docker compose pull
+
+            # 5. Chạy lại container với image mới
+            sudo docker compose up -d --remove-orphans
+
+            # 6. Dọn dẹp rác image cũ
+            sudo docker image prune -f
