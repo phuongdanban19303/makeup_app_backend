@@ -35,6 +35,6 @@ payment:
     access-key: "${MOMO_ACCESS_KEY:klm05TvNBzhg7h7j}"
     secret-key: "${MOMO_SECRET_KEY:at67qH6mk8w5Y1nAyMoYKMWACiEi2bsa}"
     endpoint: "${MOMO_ENDPOINT:https://test-payment.momo.vn/v2/gateway/api/create}"
-    redirect-url: "${MOMO_REDIRECT_URL:http://localhost:3000/payment/result}"
-    ipn-url: "${MOMO_IPN_URL:http://203.145.46.255:8085/api/v1/wallets/webhook/momo}"
+    redirect-url: "${MOMO_REDIRECT_URL:https://muamake.duckdns.org/payment/momo/callback}"
+    ipn-url: "${MOMO_IPN_URL:https://muamake.duckdns.org/api/v1/wallets/webhook/momo}"
 

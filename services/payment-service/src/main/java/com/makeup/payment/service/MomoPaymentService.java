@@ -41,10 +41,10 @@ public class MomoPaymentService {
     @Value("${payment.momo.endpoint:https://test-payment.momo.vn/v2/gateway/api/create}")
     private String endpoint;
 
-    @Value("${payment.momo.redirect-url:http://localhost:3000/payment/result}")
+    @Value("${payment.momo.redirect-url:https://muamake.duckdns.org/payment/momo/callback}")
     private String redirectUrl;
 
-    @Value("${payment.momo.ipn-url:http://203.145.46.255:8085/api/v1/wallets/webhook/momo}")
+    @Value("${payment.momo.ipn-url:https://muamake.duckdns.org/api/v1/wallets/webhook/momo}")
     private String ipnUrl;
 
     /**
@@ -59,8 +59,8 @@ public class MomoPaymentService {
         String pCode = partnerCode != null ? partnerCode.trim() : "MOMOBKUN20180529";
         String aKey = accessKey != null ? accessKey.trim() : "klm05TvNBzhg7h7j";
         String sKey = secretKey != null ? secretKey.trim() : "at67qH6mk8w5Y1nAyMoYKMWACiEi2bsa";
-        String rUrl = redirectUrl != null ? redirectUrl.trim() : "http://localhost:3000/payment/result";
-        String iUrl = ipnUrl != null ? ipnUrl.trim() : "http://203.145.46.255:8085/api/v1/wallets/webhook/momo";
+        String rUrl = redirectUrl != null ? redirectUrl.trim() : "https://muamake.duckdns.org/payment/momo/callback";
+        String iUrl = ipnUrl != null ? ipnUrl.trim() : "https://muamake.duckdns.org/api/v1/wallets/webhook/momo";
 
         String orderId = "TOPUP_MOMO_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 6);
         String requestId = UUID.randomUUID().toString();
