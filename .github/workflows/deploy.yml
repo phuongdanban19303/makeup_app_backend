@@ -2,7 +2,7 @@ name: CI/CD Pipeline - Build, Push to GHCR and Deploy to VPS
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 env:
@@ -118,7 +118,7 @@ jobs:
             cd /var/www/makeup_app/backend
 
             # 1. Cập nhật mã nguồn mới nhất trên VPS (nếu có cập nhật docker-compose.yml)
-            git pull origin main || true
+            git pull origin master || git pull origin main || true
 
             # 2. Đăng nhập GHCR trên VPS bằng token tự sinh từ action
             echo "${{ secrets.GITHUB_TOKEN }}" | sudo docker login ghcr.io -u "${{ github.actor }}" --password-stdin
