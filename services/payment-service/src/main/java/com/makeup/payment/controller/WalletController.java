@@ -36,6 +36,22 @@ public class WalletController {
     private final VnpayPaymentService vnpayPaymentService;
 
     /**
+     * API Kiểm tra thông tin phiên bản Build hiện tại của Payment Service
+     * GET /api/v1/wallets/version
+     */
+    @GetMapping("/version")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getServiceVersion() {
+        Map<String, Object> versionInfo = Map.of(
+                "service", "payment-service",
+                "paymentGateway", "VNPay Sandbox v2.1.0",
+                "status", "ACTIVE",
+                "buildVersion", "v2.0-vnpay-multistage",
+                "timestamp", java.time.Instant.now().toString()
+        );
+        return ResponseEntity.ok(ApiResponse.success(versionInfo, "Payment Service version info"));
+    }
+
+    /**
      * API 1: Lấy số dư ví của chính tài khoản đang đăng nhập (Khách hàng hoặc Thợ makeup).
      * 
      * GET /api/v1/wallets/me/balance?userType=CUSTOMER
