@@ -38,7 +38,7 @@ public class BookingDocument {
 
     private String notes;
     @Field("payment_method")
-    private String paymentMethod; // "CASH", "E_WALLET", "MOMO"
+    private String paymentMethod; // "CASH", "E_WALLET", "VNPAY"
     private String status;
 
     @Field("state_history")

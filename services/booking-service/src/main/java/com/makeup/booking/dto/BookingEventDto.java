@@ -36,7 +36,7 @@ public class BookingEventDto implements Serializable {
 
     private Double distanceKm;
     private BigDecimal totalFee;
-    private String paymentMethod; // "CASH", "E_WALLET", "MOMO"
+    private String paymentMethod; // "CASH", "E_WALLET", "VNPAY"
     private String status;
     private String timestamp;
 }

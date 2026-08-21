@@ -472,3 +472,47 @@ export const deleteMuaService = async (muaId, serviceId, permanent = true) => {
 };
 ```
 
+---
+
+### 4. Hàm Nạp tiền Ví qua Cổng VNPay Sandbox (Customer App - Wallet TopUp)
+```javascript
+// A. Khởi tạo liên kết nạp tiền VNPay và tự động chuyển hướng
+export const initiateVnpayTopUp = async (customerId, amount) => {
+  try {
+    const token = localStorage.getItem('accessToken');
+    const response = await axios.post(
+      `${API_BASE_URL}/wallets/top-up/vnpay`,
+      {
+        customerId: customerId,
+        amount: amount,
+        paymentMethod: 'VNPAY'
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    );
+
+    if (response.data.success && response.data.data?.paymentUrl) {
+      // Chuyển hướng người dùng sang Cổng thanh toán VNPay Sandbox
+      window.location.href = response.data.data.paymentUrl;
+    } else {
+      throw new Error(response.data.message || 'Không thể lấy liên kết thanh toán VNPay');
+    }
+  } catch (error) {
+    console.error("Lỗi khởi tạo nạp tiền VNPay:", error);
+    throw error;
+  }
+};
+
+// B. Lấy số dư ví mới nhất sau khi thanh toán thành công
+export const getMyWalletBalance = async () => {
+  const token = localStorage.getItem('accessToken');
+  const response = await axios.get(`${API_BASE_URL}/wallets/me/balance`, {
+    params: { userType: 'CUSTOMER' },
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data.data;
+};
+```
+
+

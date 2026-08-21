@@ -7,7 +7,7 @@ import com.makeup.payment.entity.TransactionEntity;
 import com.makeup.payment.entity.UserBankAccountEntity;
 import com.makeup.payment.entity.WithdrawalRequestEntity;
 import com.makeup.payment.enums.UserType;
-import com.makeup.payment.service.MomoPaymentService;
+import com.makeup.payment.service.VnpayPaymentService;
 import com.makeup.payment.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +33,7 @@ import java.util.Map;
 public class WalletController {
 
     private final WalletService walletService;
-    private final MomoPaymentService momoPaymentService;
+    private final VnpayPaymentService vnpayPaymentService;
 
     /**
      * API 1: Lấy số dư ví của chính tài khoản đang đăng nhập (Khách hàng hoặc Thợ makeup).
@@ -92,83 +93,81 @@ public class WalletController {
     }
 
     /**
-     * API 4: Khởi tạo liên kết Nạp tiền vào ví qua Cổng thanh toán MoMo.
-     * Trả về `payUrl` và `qrCodeUrl` cho Frontend điều hướng người dùng quét mã.
-     * 
-     * POST /api/v1/wallets/top-up/momo
+     * API 4: Khởi tạo liên kết Nạp tiền vào ví qua Cổng thanh toán VNPay Sandbox.
+     * POST /api/v1/wallets/top-up/vnpay
      */
-    @PostMapping("/top-up/momo")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> initiateMoMoTopUp(@RequestBody TopUpRequestDto request) {
+    @PostMapping("/top-up/vnpay")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> initiateVnpayTopUp(
+            @RequestBody TopUpRequestDto request,
+            HttpServletRequest httpServletRequest) {
         String custId = (request != null && request.getCustomerId() != null && !request.getCustomerId().isBlank()) ? request.getCustomerId() : "1";
         long amount = (request != null && request.getAmount() != null) ? request.getAmount().longValue() : 100000L;
-        log.info(">>> API: Khởi tạo nạp tiền MoMo cho Khách [{}] số tiền [{}]", custId, amount);
-        Map<String, Object> momoResponse = momoPaymentService.createMoMoTopUpRequest(custId, amount);
-        return ResponseEntity.ok(ApiResponse.success(momoResponse, "Tạo liên kết nạp tiền MoMo thành công"));
+        String clientIp = httpServletRequest != null ? httpServletRequest.getRemoteAddr() : "127.0.0.1";
+
+        log.info(">>> API: Khởi tạo nạp tiền VNPay cho Khách [{}] số tiền [{}]", custId, amount);
+        String paymentUrl = vnpayPaymentService.createVnpayPaymentUrl(custId, amount, clientIp);
+        Map<String, Object> data = Map.of("paymentUrl", paymentUrl);
+        return ResponseEntity.ok(ApiResponse.success(data, "Tạo liên kết nạp tiền VNPay thành công"));
     }
 
     /**
-     * API Test trực tiếp MoMo qua trình duyệt hoặc cURL (GET)
-     * GET /api/v1/wallets/test-momo?customerId=1&amount=50000
+     * API Test trực tiếp VNPay qua trình duyệt (GET)
+     * GET /api/v1/wallets/test-vnpay?customerId=1&amount=50000
      */
-    @GetMapping("/test-momo")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> testMoMoTopUp(
+    @GetMapping("/test-vnpay")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> testVnpayTopUp(
             @RequestParam(defaultValue = "1") String customerId,
-            @RequestParam(defaultValue = "50000") long amount) {
-        log.info(">>> TEST API: Test nạp tiền MoMo cho Khách [{}] số tiền [{}]", customerId, amount);
-        Map<String, Object> momoResponse = momoPaymentService.createMoMoTopUpRequest(customerId, amount);
-        return ResponseEntity.ok(ApiResponse.success(momoResponse, "Test liên kết nạp tiền MoMo thành công"));
+            @RequestParam(defaultValue = "50000") long amount,
+            HttpServletRequest httpServletRequest) {
+        String clientIp = httpServletRequest != null ? httpServletRequest.getRemoteAddr() : "127.0.0.1";
+        log.info(">>> TEST API: Test nạp tiền VNPay cho Khách [{}] số tiền [{}]", customerId, amount);
+        String paymentUrl = vnpayPaymentService.createVnpayPaymentUrl(customerId, amount, clientIp);
+        Map<String, Object> data = Map.of("paymentUrl", paymentUrl);
+        return ResponseEntity.ok(ApiResponse.success(data, "Test liên kết nạp tiền VNPay thành công"));
     }
 
     /**
-     * API 5: Webhook Callback IPN từ Cổng thanh toán MoMo.
-     * Sau khi khách trừ tiền trên App MoMo, MoMo sẽ tự động POST thông báo kết quả về API này.
-     * 
-     * POST /api/v1/wallets/webhook/momo
+     * API Webhook Callback IPN từ Cổng thanh toán VNPay.
+     * GET & POST /api/v1/wallets/webhook/vnpay
      */
-    @PostMapping("/webhook/momo")
-    public ResponseEntity<Map<String, Object>> handleMoMoWebhook(@RequestBody(required = false) Map<String, Object> rawPayload, @RequestParam(required = false) Map<String, String> rawParams) {
-        log.info(">>> API: Đã nhận MoMo Webhook IPN Callback Payload: {}, Params: {}", rawPayload, rawParams);
+    @GetMapping("/webhook/vnpay")
+    public ResponseEntity<Map<String, String>> handleVnpayIpnGet(@RequestParam Map<String, String> params) {
+        return processVnpayIpn(params);
+    }
 
-        Map<String, String> webhookParams = new HashMap<>();
-        if (rawParams != null && !rawParams.isEmpty()) {
-            webhookParams.putAll(rawParams);
-        }
-        if (rawPayload != null && !rawPayload.isEmpty()) {
-            for (Map.Entry<String, Object> entry : rawPayload.entrySet()) {
-                webhookParams.put(entry.getKey(), entry.getValue() != null ? String.valueOf(entry.getValue()) : "");
-            }
-        }
+    @PostMapping("/webhook/vnpay")
+    public ResponseEntity<Map<String, String>> handleVnpayIpnPost(@RequestParam Map<String, String> params) {
+        return processVnpayIpn(params);
+    }
 
-        // BƯỚC 1: Xác thực chữ ký mã hóa HMAC Signature bảo mật
-        boolean isValid = momoPaymentService.verifyMoMoSignature(webhookParams);
+    private ResponseEntity<Map<String, String>> processVnpayIpn(Map<String, String> params) {
+        log.info(">>> API: Đã nhận VNPay IPN Callback Params: {}", params);
+        boolean isValid = vnpayPaymentService.verifyVnpaySignature(params);
         if (!isValid) {
-            log.error(">>> [ERROR] Chữ ký Webhook MoMo không hợp lệ! Nghi vấn bị tấn công.");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Invalid Signature", "resultCode", 99));
+            log.error(">>> [ERROR] Chữ ký VNPay IPN không hợp lệ!");
+            return ResponseEntity.ok(Map.of("RspCode", "97", "Message", "Invalid Checksum"));
         }
 
-        // BƯỚC 2: Kiểm tra kết quả giao dịch từ MoMo (resultCode = "0" nghĩa là thanh toán thành công)
-        String resultCode = webhookParams.getOrDefault("resultCode", "99");
-        if ("0".equals(resultCode)) {
-            String orderId = webhookParams.get("orderId");
-            String amountStr = webhookParams.get("amount");
-            String extraData = webhookParams.getOrDefault("extraData", "");
-            
-            // Trích xuất customerId từ chuỗi extraData "customerId=xxx"
+        String vnpResponseCode = params.get("vnp_ResponseCode");
+        String vnpTxnRef = params.get("vnp_TxnRef");
+        String vnpAmountStr = params.get("vnp_Amount");
+        String vnpOrderInfo = params.getOrDefault("vnp_OrderInfo", "");
+
+        if ("00".equals(vnpResponseCode)) {
             String customerId = "1";
-            if (extraData.contains("customerId=")) {
-                customerId = extraData.split("customerId=")[1].split("&")[0];
+            if (vnpOrderInfo.contains("khach hang ")) {
+                customerId = vnpOrderInfo.split("khach hang ")[1].trim();
             }
+            long amountVal = (vnpAmountStr != null && !vnpAmountStr.isBlank()) ? (Long.parseLong(vnpAmountStr) / 100L) : 0L;
+            BigDecimal amount = BigDecimal.valueOf(amountVal);
+            String idempotencyKey = "TOPUP_VNPAY_" + vnpTxnRef;
 
-            BigDecimal amount = new BigDecimal(amountStr);
-            String idempotencyKey = "TOPUP_MOMO_" + orderId;
-
-            // BƯỚC 3: Kích hoạt cộng tiền vào Ví Khách & Ghi Sổ cái kế toán
-            walletService.topUpWallet(customerId, amount, orderId, idempotencyKey);
-            log.info(">>> Webhook MoMo đã xử lý cộng tiền ví cho khách [{}] thành công", customerId);
+            walletService.topUpWallet(customerId, amount, vnpTxnRef, idempotencyKey);
+            log.info(">>> VNPay Webhook IPN xử lý cộng tiền ví cho khách [{}] thành công", customerId);
+            return ResponseEntity.ok(Map.of("RspCode", "00", "Message", "Confirm Success"));
         }
 
-        // BƯỚC 4: Phản hồi kết quả ACK về cho máy chủ MoMo
-        return ResponseEntity.ok(Map.of("message", "Success", "resultCode", 0));
+        return ResponseEntity.ok(Map.of("RspCode", "00", "Message", "Confirm Success"));
     }
 
     /**

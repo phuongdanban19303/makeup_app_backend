@@ -151,7 +151,7 @@ public class WalletService {
 
     /**
      * KỊCH BẢN 2: Đặt đơn & Tạm giữ tiền (Escrow Hold).
-     * Hỗ trợ 2 phương thức thanh toán: Tiền mặt (CASH) và Ví điện tử (E_WALLET / MOMO).
+     * Hỗ trợ 2 phương thức thanh toán: Tiền mặt (CASH) và Ví điện tử (E_WALLET / VNPAY).
      */
     @Transactional
     public TransactionEntity escrowHold(String orderId, String customerId, BigDecimal amount, String paymentMethod) {
@@ -337,7 +337,7 @@ public class WalletService {
         }
 
         // =========================================================================
-        // TRƯỜNG HỢP B: KHÁCH TRẢ BẰNG VÍ ĐIỆN TỬ (E_WALLET / MOMO)
+        // TRƯỜNG HỢP B: KHÁCH TRẢ BẰNG VÍ ĐIỆN TỬ (E_WALLET / VNPAY)
         // =========================================================================
         WalletEntity escrowWallet = getOrCreateWallet(escrowUserId, UserType.SYSTEM_ESCROW);
         WalletEntity revenueWallet = getOrCreateWallet(revenueUserId, UserType.SYSTEM_REVENUE);

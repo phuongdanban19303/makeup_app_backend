@@ -16,5 +16,5 @@ public class EscrowRequestDto {
     private String customerId;
     private String workerId;
     private BigDecimal amount;
-    private String paymentMethod; // "CASH", "E_WALLET", "MOMO"
+    private String paymentMethod; // "CASH", "E_WALLET", "VNPAY"
 }

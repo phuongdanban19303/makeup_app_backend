@@ -30,11 +30,10 @@ payment:
   system:
     escrow-user-id: "00000000-0000-0000-0000-000000000001"
     revenue-user-id: "00000000-0000-0000-0000-000000000002"
-  momo:
-    partner-code: "${MOMO_PARTNER_CODE:MOMOBKUN20180529}"
-    access-key: "${MOMO_ACCESS_KEY:klm05TvNBzhg7h7j}"
-    secret-key: "${MOMO_SECRET_KEY:at67qH6mk8w5Y1nAyMoYKMWACiEi2bsa}"
-    endpoint: "${MOMO_ENDPOINT:https://test-payment.momo.vn/v2/gateway/api/create}"
-    redirect-url: "${MOMO_REDIRECT_URL:https://muamake.duckdns.org/payment/momo/callback}"
-    ipn-url: "${MOMO_IPN_URL:https://muamake.duckdns.org/api/v1/wallets/webhook/momo}"
+  vnpay:
+    tmn-code: "${VNPAY_TMN_CODE:2QX72L2E}"
+    hash-secret: "${VNPAY_HASH_SECRET:RAK88456789012345678901234567890}"
+    url: "${VNPAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}"
+    return-url: "${VNPAY_RETURN_URL:https://muamake.duckdns.org/payment/vnpay/callback}"
+    ipn-url: "${VNPAY_IPN_URL:https://muamake.duckdns.org/api/v1/wallets/webhook/vnpay}"
 

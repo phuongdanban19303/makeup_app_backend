@@ -34,6 +34,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     // Endpoints công khai không yêu cầu token xác thực
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
             "/api/v1/auth/**",
+            "/api/v1/wallets/webhook/**",
+            "/api/v1/wallets/test-vnpay",
             "/api/v1/workers/nearby",
             "/api/v1/mua/*/profile",
             "/api/v1/mua/*/services",

@@ -14,5 +14,5 @@ import java.math.BigDecimal;
 public class TopUpRequestDto {
     private String customerId;
     private BigDecimal amount;
-    private String paymentMethod; // "MOMO", "VNPAY", "PAYOS"
+    private String paymentMethod; // "VNPAY", "E_WALLET", "PAYOS"
 }

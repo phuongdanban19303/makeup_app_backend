@@ -32,5 +32,5 @@ public class BookingCreateRequestDto {
     private String address;
 
     private String notes;
-    private String paymentMethod; // "CASH", "E_WALLET", "MOMO"
+    private String paymentMethod; // "CASH", "E_WALLET", "VNPAY"
 }
