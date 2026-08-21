@@ -77,7 +77,7 @@ services:
     build:
       context: .
       dockerfile: services/api-gateway/Dockerfile
-    image: ghcr.io/${GITHUB_REPOSITORY:-username/makeup_app}/api-gateway:latest
+    image: ghcr.io/${GITHUB_REPOSITORY:-phuongdanban19303/makeup_app_backend}/api-gateway:latest
     container_name: makeup_api_gateway
     ports:
       - "8080:8080"
@@ -100,7 +100,7 @@ services:
     build:
       context: .
       dockerfile: services/user-service/Dockerfile
-    image: ghcr.io/${GITHUB_REPOSITORY:-username/makeup_app}/user-service:latest
+    image: ghcr.io/${GITHUB_REPOSITORY:-phuongdanban19303/makeup_app_backend}/user-service:latest
     container_name: makeup_user_service
     ports:
       - "8081:8081"
@@ -122,7 +122,7 @@ services:
     build:
       context: .
       dockerfile: services/location-service/Dockerfile
-    image: ghcr.io/${GITHUB_REPOSITORY:-username/makeup_app}/location-service:latest
+    image: ghcr.io/${GITHUB_REPOSITORY:-phuongdanban19303/makeup_app_backend}/location-service:latest
     container_name: makeup_location_service
     ports:
       - "8082:8082"
@@ -144,7 +144,7 @@ services:
     build:
       context: .
       dockerfile: services/booking-service/Dockerfile
-    image: ghcr.io/${GITHUB_REPOSITORY:-username/makeup_app}/booking-service:latest
+    image: ghcr.io/${GITHUB_REPOSITORY:-phuongdanban19303/makeup_app_backend}/booking-service:latest
     container_name: makeup_booking_service
     ports:
       - "8083:8083"
@@ -172,7 +172,7 @@ services:
     build:
       context: .
       dockerfile: services/pricing-service/Dockerfile
-    image: ghcr.io/${GITHUB_REPOSITORY:-username/makeup_app}/pricing-service:latest
+    image: ghcr.io/${GITHUB_REPOSITORY:-phuongdanban19303/makeup_app_backend}/pricing-service:latest
     container_name: makeup_pricing_service
     ports:
       - "8084:8084"
@@ -188,7 +188,7 @@ services:
     build:
       context: .
       dockerfile: services/payment-service/Dockerfile
-    image: ghcr.io/${GITHUB_REPOSITORY:-username/makeup_app}/payment-service:latest
+    image: ghcr.io/${GITHUB_REPOSITORY:-phuongdanban19303/makeup_app_backend}/payment-service:latest
     container_name: makeup_payment_service
     ports:
       - "8085:8085"

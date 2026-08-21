@@ -129,8 +129,8 @@ jobs:
             # 4. Kéo image mới từ GHCR về VPS
             sudo docker compose pull
 
-            # 5. Chạy lại container với image mới
-            sudo docker compose up -d --remove-orphans
+            # 5. Chạy lại container với image mới (tự động build từ code nếu pull thất bại)
+            sudo docker compose up -d --build --remove-orphans
 
             # 6. Dọn dẹp rác image cũ
             sudo docker image prune -f

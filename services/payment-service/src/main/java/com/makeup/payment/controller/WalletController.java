@@ -98,14 +98,26 @@ public class WalletController {
      */
     @PostMapping("/top-up/vnpay")
     public ResponseEntity<ApiResponse<Map<String, Object>>> initiateVnpayTopUp(
-            @RequestBody TopUpRequestDto request,
+            @RequestBody(required = false) TopUpRequestDto request,
             HttpServletRequest httpServletRequest) {
         String custId = (request != null && request.getCustomerId() != null && !request.getCustomerId().isBlank()) ? request.getCustomerId() : "1";
         long amount = (request != null && request.getAmount() != null) ? request.getAmount().longValue() : 100000L;
         String clientIp = httpServletRequest != null ? httpServletRequest.getRemoteAddr() : "127.0.0.1";
 
-        log.info(">>> API: Khởi tạo nạp tiền VNPay cho Khách [{}] số tiền [{}]", custId, amount);
+        log.info(">>> API POST: Khởi tạo nạp tiền VNPay cho Khách [{}] số tiền [{}]", custId, amount);
         String paymentUrl = vnpayPaymentService.createVnpayPaymentUrl(custId, amount, clientIp);
+        Map<String, Object> data = Map.of("paymentUrl", paymentUrl);
+        return ResponseEntity.ok(ApiResponse.success(data, "Tạo liên kết nạp tiền VNPay thành công"));
+    }
+
+    @GetMapping("/top-up/vnpay")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> initiateVnpayTopUpGet(
+            @RequestParam(defaultValue = "1") String customerId,
+            @RequestParam(defaultValue = "100000") long amount,
+            HttpServletRequest httpServletRequest) {
+        String clientIp = httpServletRequest != null ? httpServletRequest.getRemoteAddr() : "127.0.0.1";
+        log.info(">>> API GET: Khởi tạo nạp tiền VNPay cho Khách [{}] số tiền [{}]", customerId, amount);
+        String paymentUrl = vnpayPaymentService.createVnpayPaymentUrl(customerId, amount, clientIp);
         Map<String, Object> data = Map.of("paymentUrl", paymentUrl);
         return ResponseEntity.ok(ApiResponse.success(data, "Tạo liên kết nạp tiền VNPay thành công"));
     }
